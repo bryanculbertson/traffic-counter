@@ -1,0 +1,14 @@
+{
+    "python.defaultInterpreterPath": ".venv/bin/python3",
+    "python.formatting.provider": "black",
+    "python.linting.flake8Enabled": true,
+    "python.linting.mypyEnabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.enabled": true,
+    "files.watcherExclude": {
+        "**/.mypy_cache/**": true,
+        "**/.tox/**": true,
+        "**/.venv/**": true,
+        "**/out/**": true
+    }
+}
