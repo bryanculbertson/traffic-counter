@@ -23,6 +23,7 @@ sudo apt-get -y install --no-install-recommends \
     libxmlsec1-dev \
     llvm \
     make \
+    shellcheck \
     tk-dev \
     wget \
     xz-utils \
@@ -44,11 +45,11 @@ export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init --path)"
 
-pyenv install
+"$PYENV_ROOT"/bin/pyenv install
 
-curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
+curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | "$PYENV_ROOT"/shims/python -
 
 echo "Installing all of our python dependencies using Poetry."
-poetry install
+"$HOME"/.local/bin/poetry install
 
 echo "Install done."

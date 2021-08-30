@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 """
-Basic CLI Template
+Tool for counting traffic
 
 Example usage:
-    poetry run template-cli version
+    poetry run traffic-counter version
 
 """
 import click
