@@ -6,15 +6,36 @@ Tool for counting traffic
 Example usage:
     poetry run traffic-counter version
 
+    poetry run traffic-counter snapshot \
+        --video-url=https://cams.cdn-surfline.com/cdn-wc/wc-southoceanbeach/chunklist.m3u8 \
+        --filepath=out/ocean.png
+
 """
+import pathlib
+
 import click
 import dotenv
+
+from traffic_counter import video
 
 
 @click.group()
 def cli() -> None:
     """Run cli commands"""
     dotenv.load_dotenv()
+
+
+@cli.command()
+@click.option("--video-url", type=str, required=True)
+@click.option(
+    "--filepath",
+    type=click.Path(dir_okay=False, writable=True, path_type=pathlib.Path),
+    required=True,
+)
+def snapshot(video_url: str, filepath: pathlib.Path) -> None:
+    """Save a image from a video to a file"""
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    video.snapshot_to_file(video_url, filepath)
 
 
 @cli.command()
