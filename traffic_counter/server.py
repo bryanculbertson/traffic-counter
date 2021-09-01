@@ -3,7 +3,6 @@ poetry run uvicorn traffic_counter.server:app --reload
 """
 
 import functools
-import time
 from typing import Iterator
 
 import fastapi

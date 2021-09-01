@@ -1,9 +1,8 @@
 import abc
-import time
 import threading
+import time
 from collections.abc import Generator
 from typing import Optional
-from dataclasses import dataclass
 
 import cv2
 import numpy as np
@@ -54,7 +53,9 @@ class BaseCamera(abc.ABC):
 
 class OpenCVCamera(BaseCamera):
     def __init__(
-        self, source: str, *,
+        self,
+        source: str,
+        *,
         format: str = ".jpg",
         output_fps: float = 25.0,
     ) -> None:
