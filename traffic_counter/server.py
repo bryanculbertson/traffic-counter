@@ -3,6 +3,7 @@ poetry run uvicorn traffic_counter.server:app --reload
 """
 
 import functools
+import time
 from typing import Iterator
 
 import fastapi
@@ -35,11 +36,7 @@ async def read_root(request: fastapi.Request) -> fastapi.Response:
 
 
 def streamer(source: camera.BaseCamera) -> Iterator[bytes]:
-    while True:
-        frame = source.get_frame()
-        if frame is None:
-            continue
-
+    for frame in source.frames():
         yield (
             b"--frame\r\n"
             b"Content-Type: image/jpeg\r\n\r\n" + frame.tobytes() + b"\r\n"
@@ -50,10 +47,9 @@ def streamer(source: camera.BaseCamera) -> Iterator[bytes]:
 async def video_endpoint(range: str = fastapi.Header(None)) -> fastapi.Response:
     global source_camera
 
-    settings = get_settings()
-
     if not source_camera:
-        source_camera = camera.OpenCVCamera(settings.video_url, frame_rate=5.0)
+        settings = get_settings()
+        source_camera = camera.OpenCVCamera(settings.video_url)
         source_camera.start()
 
     return fastapi.responses.StreamingResponse(
