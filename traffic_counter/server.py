@@ -29,6 +29,15 @@ def get_settings() -> Settings:
 source_camera = None
 
 
+@app.on_event("startup")
+async def startup_event() -> None:
+    global source_camera
+
+    settings = get_settings()
+    source_camera = camera.OpenCVCamera(settings.video_url)
+    source_camera.start()
+
+
 @app.get("/")
 async def read_root(request: fastapi.Request) -> fastapi.Response:
     return templates.TemplateResponse("index.html", context={"request": request})
@@ -47,9 +56,7 @@ async def video_endpoint(range: str = fastapi.Header(None)) -> fastapi.Response:
     global source_camera
 
     if not source_camera:
-        settings = get_settings()
-        source_camera = camera.OpenCVCamera(settings.video_url)
-        source_camera.start()
+        return fastapi.Response(status_code=fastapi.status.HTTP_503_SERVICE_UNAVAILABLE)
 
     return fastapi.responses.StreamingResponse(
         streamer(source_camera),
