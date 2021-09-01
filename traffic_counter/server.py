@@ -34,7 +34,7 @@ async def startup_event() -> None:
     global source_camera
 
     settings = get_settings()
-    source_camera = camera.OpenCVCamera(settings.video_url)
+    source_camera = camera.TrafficCounterCamera(settings.video_url)
     source_camera.start()
 
 
