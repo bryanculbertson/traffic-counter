@@ -29,11 +29,18 @@ class BaseCamera(abc.ABC):
 
     def frames(self) -> Generator[np.ndarray, None, None]:
         """Return the current camera frame."""
+        prev = time.monotonic()
         while True:
             if self._frame is not None:
                 yield self._frame
 
-            time.sleep(1.0 / self._output_fps)
+            current = time.monotonic()
+            elasped = current - prev
+            prev = current
+
+            sleep_time = 1.0 / self._output_fps - elasped
+
+            time.sleep(max(sleep_time, 0.0))
 
     @abc.abstractmethod
     def _calculate_frame(self) -> Optional[np.ndarray]:
@@ -42,13 +49,22 @@ class BaseCamera(abc.ABC):
 
     def _run(self) -> None:
         """Camera background thread."""
+
+        prev = time.monotonic()
         while True:
             frame = self._calculate_frame()
             if frame is None:
                 raise Exception("Error calculating frame")
 
             self._frame = frame
-            time.sleep(1.0 / self._camera_fps)
+
+            current = time.monotonic()
+            elasped = current - prev
+            prev = current
+
+            sleep_time = 1.0 / self._camera_fps - elasped
+
+            time.sleep(max(sleep_time, 0.0))
 
 
 class OpenCVCamera(BaseCamera):
@@ -65,7 +81,7 @@ class OpenCVCamera(BaseCamera):
         if not self._camera.isOpened():
             raise Exception("Could not start camera.")
 
-        camera_fps = 30.0
+        camera_fps = 25.0
 
         prop_fps = self._camera.get(cv2.CAP_PROP_FPS)
         if prop_fps and prop_fps > 0.0:
