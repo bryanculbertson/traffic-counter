@@ -9,7 +9,7 @@ import fastapi
 import fastapi.templating
 import pydantic
 
-from traffic_counter import video
+from traffic_counter import camera
 
 app = fastapi.FastAPI()
 templates = fastapi.templating.Jinja2Templates(directory="traffic_counter/templates")
@@ -26,24 +26,37 @@ def get_settings() -> Settings:
     return Settings()
 
 
+source_camera = None
+
+
 @app.get("/")
 async def read_root(request: fastapi.Request) -> fastapi.Response:
     return templates.TemplateResponse("index.html", context={"request": request})
 
 
-def streamer(video_url: str) -> Iterator[bytes]:
-    for image in video.video_as_images(video_url):
+def streamer(source: camera.BaseCamera) -> Iterator[bytes]:
+    while True:
+        frame = source.get_frame()
+        if frame is None:
+            continue
+
         yield (
             b"--frame\r\n"
-            b"Content-Type: image/jpeg\r\n\r\n" + bytearray(image) + b"\r\n"
+            b"Content-Type: image/jpeg\r\n\r\n" + frame.tobytes() + b"\r\n"
         )
 
 
 @app.get("/video")
 async def video_endpoint(range: str = fastapi.Header(None)) -> fastapi.Response:
+    global source_camera
+
     settings = get_settings()
 
+    if not source_camera:
+        source_camera = camera.OpenCVCamera(settings.video_url, frame_rate=5.0)
+        source_camera.start()
+
     return fastapi.responses.StreamingResponse(
-        streamer(settings.video_url),
+        streamer(source_camera),
         media_type="multipart/x-mixed-replace;boundary=frame",
     )
