@@ -6,6 +6,7 @@ from typing import Optional
 
 import cv2
 import numpy as np
+import pandas as pd
 
 
 class BaseCamera(abc.ABC):
@@ -29,11 +30,18 @@ class BaseCamera(abc.ABC):
 
     def frames(self) -> Generator[np.ndarray, None, None]:
         """Return the current camera frame."""
+        prev = time.monotonic()
         while True:
             if self._frame is not None:
                 yield self._frame
 
-            time.sleep(1.0 / self._output_fps)
+            current = time.monotonic()
+            elasped = current - prev
+            prev = current
+
+            sleep_time = 1.0 / self._output_fps - elasped
+
+            time.sleep(max(sleep_time, 0.0))
 
     @abc.abstractmethod
     def _calculate_frame(self) -> Optional[np.ndarray]:
@@ -42,13 +50,22 @@ class BaseCamera(abc.ABC):
 
     def _run(self) -> None:
         """Camera background thread."""
+
+        prev = time.monotonic()
         while True:
             frame = self._calculate_frame()
             if frame is None:
                 raise Exception("Error calculating frame")
 
             self._frame = frame
-            time.sleep(1.0 / self._camera_fps)
+
+            current = time.monotonic()
+            elasped = current - prev
+            prev = current
+
+            sleep_time = 1.0 / self._camera_fps - elasped
+
+            time.sleep(max(sleep_time, 0.0))
 
 
 class OpenCVCamera(BaseCamera):
@@ -65,7 +82,7 @@ class OpenCVCamera(BaseCamera):
         if not self._camera.isOpened():
             raise Exception("Could not start camera.")
 
-        camera_fps = 30.0
+        camera_fps = 25.0
 
         prop_fps = self._camera.get(cv2.CAP_PROP_FPS)
         if prop_fps and prop_fps > 0.0:
@@ -89,6 +106,121 @@ class OpenCVCamera(BaseCamera):
             return None
 
         success, encoded_frame = cv2.imencode(self._format, unencoded_frame)
+        if not success:
+            print("Cannot encode image from camera")
+            return None
+
+        return encoded_frame
+
+
+class TrafficCounterCamera(OpenCVCamera):
+    def __init__(
+        self,
+        source: str,
+        *,
+        format: str = ".jpg",
+        output_fps: float = 25.0,
+    ) -> None:
+        self._df = pd.DataFrame()
+        self._df.index.name = "Frames"
+
+        self._framenumber = 0  # keeps track of current frame
+        self._carscrossedup = 0  # keeps track of cars that crossed up
+        self._carscrosseddown = 0  # keeps track of cars that crossed down
+        self._carids: list = []  # blank list to add car ids
+        self._caridscrossed: list = []  # blank list to add car ids that have crossed
+        self._totalcars = 0  # keeps track of total cars
+        self._fgbg = cv2.createBackgroundSubtractorMOG2()
+
+        super().__init__(source, format=format, output_fps=output_fps)
+
+    def _calculate_frame(self) -> Optional[np.ndarray]:
+        if self._camera is None:
+            print("Camera is not initialized")
+            return None
+
+        success, unencoded_frame = self._camera.read()
+        if not success:
+            print("Cannot read from camera")
+            return None
+
+        # Only grab the highway
+        image = unencoded_frame[400:600, 0:1024]
+
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        fgmask = self._fgbg.apply(gray)
+
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+        closing = cv2.morphologyEx(fgmask, cv2.MORPH_CLOSE, kernel)
+        opening = cv2.morphologyEx(closing, cv2.MORPH_OPEN, kernel)
+        dilation = cv2.dilate(opening, kernel)
+        _, bins = cv2.threshold(dilation, 220, 255, cv2.THRESH_BINARY)
+        contours, hierarchy = cv2.findContours(
+            bins, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
+        )
+        hull = [cv2.convexHull(c) for c in contours]
+
+        cv2.drawContours(image, hull, -1, (0, 255, 0), 3)
+
+        # min area for contours in case a bunch of small noise contours are created
+        minarea = 1000
+
+        # max area for contours, can be quite large for buses
+        maxarea = 50000
+
+        # vectors for the x and y locations of contour centroids in current frame
+        cxx = np.zeros(len(contours))
+        cyy = np.zeros(len(contours))
+
+        for i in range(len(contours)):  # cycles through all contours in current frame
+
+            if (
+                hierarchy[0, i, 3] == -1
+            ):  # using hierarchy to only count parent contours (contours not within others)
+
+                area = cv2.contourArea(contours[i])  # area of contour
+
+                if minarea < area < maxarea:  # area threshold for contour
+
+                    # calculating centroids of contours
+                    cnt = contours[i]
+                    M = cv2.moments(cnt)
+                    cx = int(M["m10"] / M["m00"])
+                    cy = int(M["m01"] / M["m00"])
+
+                    # gets bounding points of contour to create rectangle
+                    # x,y is top left corner and w,h is width and height
+                    x, y, w, h = cv2.boundingRect(cnt)
+
+                    # creates a rectangle around contour
+                    cv2.rectangle(image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
+                    # Prints centroid text in order to double check later on
+                    cv2.putText(
+                        image,
+                        str(cx) + "," + str(cy),
+                        (cx + 10, cy + 10),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.3,
+                        (0, 0, 255),
+                        1,
+                    )
+
+                    cv2.drawMarker(
+                        image,
+                        (cx, cy),
+                        (0, 0, 255),
+                        cv2.MARKER_STAR,
+                        markerSize=5,
+                        thickness=1,
+                        line_type=cv2.LINE_AA,
+                    )
+
+                    # adds centroids that passed previous criteria to centroid list
+                    cxx[i] = cx
+                    cyy[i] = cy
+
+        success, encoded_frame = cv2.imencode(self._format, image)
         if not success:
             print("Cannot encode image from camera")
             return None
