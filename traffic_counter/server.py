@@ -16,7 +16,9 @@ templates = fastapi.templating.Jinja2Templates(directory="traffic_counter/templa
 
 
 class Settings(pydantic.BaseSettings):
-    video_url: str = "https://cams.cdn-surfline.com/cdn-wc/wc-southoceanbeach/chunklist.m3u8"
+    video_url: str = (
+        "https://cams.cdn-surfline.com/cdn-wc/wc-southoceanbeach/chunklist.m3u8"
+    )
 
 
 @functools.lru_cache()
@@ -42,5 +44,6 @@ async def video_endpoint(range: str = fastapi.Header(None)) -> fastapi.Response:
     settings = get_settings()
 
     return fastapi.responses.StreamingResponse(
-        streamer(settings.video_url), media_type="multipart/x-mixed-replace;boundary=frame"
+        streamer(settings.video_url),
+        media_type="multipart/x-mixed-replace;boundary=frame",
     )
