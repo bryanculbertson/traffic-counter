@@ -224,3 +224,11 @@
     poetry shell
     traffic-counter --help
     ```
+
+## Usage
+
+1. Start server
+
+    ```
+    poetry run traffic-counter serve
+    ```
