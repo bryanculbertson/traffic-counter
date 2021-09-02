@@ -52,7 +52,7 @@ def streamer(source: camera.BaseCamera) -> Iterator[bytes]:
 
 
 @app.get("/video")
-async def video_endpoint(range: str = fastapi.Header(None)) -> fastapi.Response:
+async def video_endpoint() -> fastapi.Response:
     global source_camera
 
     if not source_camera:
