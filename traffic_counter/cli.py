@@ -15,6 +15,7 @@ import pathlib
 
 import click
 import dotenv
+import uvicorn
 
 from traffic_counter import video
 
@@ -36,6 +37,12 @@ def snapshot(video_url: str, filepath: pathlib.Path) -> None:
     """Save a image from a video to a file"""
     filepath.parent.mkdir(parents=True, exist_ok=True)
     video.snapshot_to_file(video_url, filepath)
+
+
+@cli.command()
+def serve() -> None:
+    """Serve traffic counter app"""
+    uvicorn.run("traffic_counter.server:app")
 
 
 @cli.command()

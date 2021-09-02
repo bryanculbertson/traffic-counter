@@ -7,7 +7,6 @@ from typing import Optional
 
 import cv2
 import numpy as np
-import pandas as pd
 
 
 class BaseCamera(abc.ABC):
@@ -122,9 +121,6 @@ class TrafficCounterCamera(OpenCVCamera):
         format: str = ".jpg",
         output_fps: float = 25.0,
     ) -> None:
-        self._df = pd.DataFrame()
-        self._df.index.name = "Frames"
-
         self._centroids: list[tuple[int, int]] = []
         self._totalcars = 0
         self._fgbg = cv2.createBackgroundSubtractorMOG2()

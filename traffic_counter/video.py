@@ -1,5 +1,4 @@
 import pathlib
-from typing import Iterator
 
 import cv2
 
@@ -31,22 +30,3 @@ def snapshot_to_image(video_url: str, format: str = ".jpg") -> tuple:
         raise Exception("Could not encode frane as image")
 
     return image
-
-
-def video_as_images(video_url: str, format: str = ".jpg") -> Iterator[tuple]:
-    cam = cv2.VideoCapture(video_url)
-
-    while True:
-        success, frame = cam.read()
-
-        if not success:
-            break
-
-        success, image = cv2.imencode(format, frame)
-
-        if not success:
-            break
-
-        yield image
-
-    cam.release()
