@@ -52,4 +52,8 @@ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-
 echo "Installing all of our python dependencies using Poetry."
 "$HOME"/.local/bin/poetry install
 
+echo "Installing pre-commit."
+curl https://pre-commit.com/install-local.py | "$PYENV_ROOT"/shims/python -
+"$PYENV_ROOT"/shims/pre-commit install
+
 echo "Install done."
