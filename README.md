@@ -1,10 +1,10 @@
 # traffic-counter
 
-## Setup for Codespaces
+## Setup for Devcontainer/Codespaces
 
-1. Create a Codespace
+1. Create a Codespace or open in VS Code locally
 
-    Follow Github instructions to [Create a Codespace](https://docs.github.com/en/codespaces/developing-in-codespaces/creating-a-codespace) for this project.
+    Follow Github instructions to [Create a Codespace](https://docs.github.com/en/codespaces/developing-in-codespaces/creating-a-codespace) for this project, or VS Code instructions to [open repo in container](https://code.visualstudio.com/docs/remote/containers-tutorial)
 
 1. Test your installation!
 

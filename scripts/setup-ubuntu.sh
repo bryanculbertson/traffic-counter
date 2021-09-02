@@ -54,6 +54,12 @@ echo "Installing all of our python dependencies using Poetry."
 
 echo "Installing pre-commit."
 curl https://pre-commit.com/install-local.py | "$PYENV_ROOT"/shims/python -
-"$PYENV_ROOT"/shims/pre-commit install
+"$HOME"/bin/pre-commit install
+
+# shellcheck disable=SC2016
+{
+    echo ''
+    echo 'export PATH="$HOME/bin:$PATH"'
+} >> ~/.bashrc
 
 echo "Install done."
