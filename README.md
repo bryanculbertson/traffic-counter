@@ -99,6 +99,7 @@
     ```
 
     Refresh current shell with updated paths:
+
     ```sh
     source ~/.bashrc
     ```
