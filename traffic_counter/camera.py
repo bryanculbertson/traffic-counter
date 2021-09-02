@@ -7,7 +7,6 @@ from typing import Optional
 
 import cv2
 import numpy as np
-import pandas as pd
 
 
 class BaseCamera(abc.ABC):
