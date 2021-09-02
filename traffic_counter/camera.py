@@ -1,4 +1,5 @@
 import abc
+import math
 import threading
 import time
 from collections.abc import Generator
@@ -124,12 +125,8 @@ class TrafficCounterCamera(OpenCVCamera):
         self._df = pd.DataFrame()
         self._df.index.name = "Frames"
 
-        self._framenumber = 0  # keeps track of current frame
-        self._carscrossedup = 0  # keeps track of cars that crossed up
-        self._carscrosseddown = 0  # keeps track of cars that crossed down
-        self._carids: list = []  # blank list to add car ids
-        self._caridscrossed: list = []  # blank list to add car ids that have crossed
-        self._totalcars = 0  # keeps track of total cars
+        self._centroids: list[tuple[int, int]] = []
+        self._totalcars = 0
         self._fgbg = cv2.createBackgroundSubtractorMOG2()
 
         super().__init__(source, format=format, output_fps=output_fps)
@@ -168,15 +165,11 @@ class TrafficCounterCamera(OpenCVCamera):
         # max area for contours, can be quite large for buses
         maxarea = 50000
 
-        # vectors for the x and y locations of contour centroids in current frame
-        cxx = np.zeros(len(contours))
-        cyy = np.zeros(len(contours))
+        current_centroids = []
 
         for i in range(len(contours)):  # cycles through all contours in current frame
 
-            if (
-                hierarchy[0, i, 3] == -1
-            ):  # using hierarchy to only count parent contours (contours not within others)
+            if hierarchy[0, i, 3] == -1:
 
                 area = cv2.contourArea(contours[i])  # area of contour
 
@@ -217,8 +210,34 @@ class TrafficCounterCamera(OpenCVCamera):
                     )
 
                     # adds centroids that passed previous criteria to centroid list
-                    cxx[i] = cx
-                    cyy[i] = cy
+                    current_centroids.append((cx, cy))
+
+        max_distance = 100
+
+        existing_centroids = list(self._centroids)
+        for current_centroid in current_centroids:
+            found = -1
+            for i, existing_centroid in enumerate(existing_centroids):
+                if math.dist(current_centroid, existing_centroid) < max_distance:
+                    found = i
+                    break
+
+            if found > -1:
+                del existing_centroids[i]
+            else:
+                self._totalcars += 1
+
+        self._centroids = current_centroids
+
+        cv2.putText(
+            image,
+            "Cars: " + str(self._totalcars),
+            (5, 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1.0,
+            (200, 200, 200),
+            2,
+        )
 
         success, encoded_frame = cv2.imencode(self._format, image)
         if not success:
