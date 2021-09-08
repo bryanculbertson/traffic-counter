@@ -16,8 +16,8 @@ from typing import Optional
 
 import click
 import dotenv
-import uvicorn
 import pathy
+import uvicorn
 
 from traffic_counter import video
 
@@ -40,6 +40,7 @@ class FluidPath(click.ParamType):
             self.fail(
                 f"{value!r} needs to be a local or GCS file path string.", param, ctx
             )
+            return None
 
 
 @click.group()
