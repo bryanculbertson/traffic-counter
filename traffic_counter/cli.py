@@ -12,12 +12,34 @@ Example usage:
 
 """
 import pathlib
+from typing import Optional
 
 import click
 import dotenv
 import uvicorn
+import pathy
 
 from traffic_counter import video
+
+
+class FluidPath(click.ParamType):
+    name = "fluid_path"
+
+    def convert(
+        self,
+        value: Optional[str],
+        param: Optional[click.Parameter],
+        ctx: Optional[click.Context],
+    ) -> Optional[pathy.FluidPath]:
+        if value is None:
+            return None
+
+        try:
+            return pathy.Pathy.fluid(value)
+        except (TypeError, ValueError):
+            self.fail(
+                f"{value!r} needs to be a local or GCS file path string.", param, ctx
+            )
 
 
 @click.group()
@@ -30,7 +52,7 @@ def cli() -> None:
 @click.option("--video-url", type=str, required=True)
 @click.option(
     "--filepath",
-    type=click.Path(dir_okay=False, writable=True, path_type=pathlib.Path),
+    type=FluidPath(),
     required=True,
 )
 def snapshot(video_url: str, filepath: pathlib.Path) -> None:
