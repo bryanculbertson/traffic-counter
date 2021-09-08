@@ -25,3 +25,4 @@ updates:
       - dependency-name: "black"
       - dependency-name: "mypy"
       - dependency-name: "isort"
+      - dependency-name: "pre-commit"
