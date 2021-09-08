@@ -62,4 +62,15 @@ curl https://pre-commit.com/install-local.py | "$PYENV_ROOT"/shims/python -
     echo 'export PATH="$HOME/bin:$PATH"'
 } >> ~/.bashrc
 
+curl https://sdk.cloud.google.com > /tmp/install.sh
+bash /tmp/install.sh --disable-prompts
+rm /tmp/install.sh
+
+# shellcheck disable=SC2016
+{
+    echo ''
+    echo 'export PATH="$HOME/google-cloud-sdk/bin:$PATH"'
+} >> ~/.bashrc
+
+
 echo "Install done."

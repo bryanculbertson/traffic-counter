@@ -130,6 +130,13 @@
     pre-commit install
     ```
 
+1. Install gcloud SDK:
+
+    ```sh
+    brew install --cask google-cloud-sdk
+    gcloud init
+    ```
+
 ## Setup for Ubuntu/Debian
 
 1. Install required system deps:
@@ -247,6 +254,13 @@
     ```sh
     curl https://pre-commit.com/install-local.py | python -
     pre-commit install
+    ```
+
+1. Install gcloud SDK:
+
+    ```sh
+    curl https://sdk.cloud.google.com | bash
+    gcloud init
     ```
 
 ## Usage

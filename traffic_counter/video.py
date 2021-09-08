@@ -1,4 +1,5 @@
 import pathlib
+import tempfile
 
 import cv2
 
@@ -12,7 +13,14 @@ def snapshot_to_file(video_url: str, filepath: pathlib.Path) -> None:
 
     cam.release()
 
-    cv2.imwrite(str(filepath), frame)
+    # Write to temp file to support uploading to cloud filesystem
+    with tempfile.NamedTemporaryFile(suffix=filepath.suffix) as tmp_file:
+        cv2.imwrite(tmp_file.name, frame)
+        tmp_file.seek(0)
+
+        with filepath.open("wb") as outfile:
+            for content in tmp_file:
+                outfile.write(content)
 
 
 def snapshot_to_image(video_url: str, format: str = ".jpg") -> tuple:
