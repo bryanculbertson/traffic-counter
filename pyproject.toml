@@ -30,7 +30,7 @@ pytest =  "6.2.5"
 pytest-runner = "5.3.1"
 pytest-cov = "2.12.1"
 pytest-mock = "3.6.1"
-pytest-xdist = {extras = ["psutil"], version = "2.3.0"}
+pytest-xdist = {extras = ["psutil"], version = "2.4.0"}
 pytest-randomly = "3.10.1"
 
 [tool.poetry.scripts]
